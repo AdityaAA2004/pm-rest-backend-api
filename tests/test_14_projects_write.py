@@ -35,31 +35,12 @@ def run(ctx: TestContext) -> None:
         resp = ctx.req("POST", _create_path, token=token1, body={})
         ctx.assert_status(resp, 400, "POST /api/organizations/:id/projects empty body → 400")
 
-# LLM_SECTION_START
-# Generate required-field validation tests for entity "Project".
-# Canonical create path: /api/organizations/:id/projects
-# Requires authentication: True
-#
-# Required scalar fields (excluding server-injected FK fields):
-#   name: string (required)
-#
-# If the required fields list above is EMPTY, output only this single comment line and nothing else:
-#   # (no required fields to validate)
-#
-# Otherwise, for EACH required field, generate one test:
-#   - Omit only that field from the body
-#   - Include all other required fields with sensible values
-#   - MUST also include every secondary FK listed below in the body (they are required by the API)
-#   - Expect HTTP 400: ctx.assert_status(resp, 400, "POST project missing <field> → 400")
-#   - Wrap in `if token1:` guard
-#
-# Then generate ONE ownership spoofing test for the owner FK (if present):
-#
-# Available variables (already declared above):
-#   token1, token2
-#   user1_id, user2_id
-#   project1_id, project2_id, project3_id
-# LLM_SECTION_END    # 14-update  PUT happy path → 200
+    if token1:
+        resp = ctx.req("POST", _create_path, token=token1,
+                       body={})  # name omitted
+        ctx.assert_status(resp, 400, "POST project missing name → 400")
+
+    # 14-update  PUT happy path → 200
     if project1_id and token1:
         _update_val: str | int = "Updated Project"
         resp = ctx.req("PUT", "/api/projects/" + str(project1_id),

@@ -2,24 +2,15 @@ import { z } from 'zod';
 import { ValidationError } from '../lib/errors.js';
 import { OrganizationCreateInput, OrganizationUpdateInput } from '../types/organization.types.js';
 
-/* LLM_SECTION_START */
-// Entity: Organization
-// Fields (name: ts_type, required/optional):
-//   name: string (required)
-//   slug: string (required)
-//   description: string (optional)
-//   website: string (optional)
-//   createdAt: Date (required)
-//   updatedAt: Date (required)
-// TODO: define Zod schemas for Organization create and update
-// BUSINESS RULE: Name and slug must be unique across all organizations
-// BUSINESS RULE: slug must be lowercase, alphanumeric with hyphens only
-// BUSINESS RULE: website is optional and must be a valid URL when provided
-// FIELD DEFAULT: createdAt has @default(now()) — MUST be .optional() in createSchema
-// FIELD DEFAULT: updatedAt has @default(now()) — MUST be .optional() in createSchema
-const organizationCreateSchema = z.object({});
-const organizationUpdateSchema = z.object({});
-/* LLM_SECTION_END */
+const organizationCreateSchema = z.object({
+  name: z.string().min(1).max(255).trim(),
+  slug: z.string().min(1).max(255).trim().regex(/^[a-z0-9-]+$/, { message: 'Slug must be lowercase alphanumeric with hyphens only' }),
+  description: z.string().min(1).max(10000).optional(),
+  website: z.string().url().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+const organizationUpdateSchema = organizationCreateSchema.partial();
 
 function formatErrors(errors: z.ZodIssue[]): string {
   const seen = new Set<string>();

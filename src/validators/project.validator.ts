@@ -2,28 +2,22 @@ import { z } from 'zod';
 import { ValidationError } from '../lib/errors.js';
 import { ProjectCreateInput, ProjectUpdateInput } from '../types/project.types.js';
 
-/* LLM_SECTION_START */
-// Entity: Project
-// Fields (name: ts_type, required/optional):
-//   name: string (required)
-//   description: string (optional)
-//   archived: boolean (required)
-//   organizationId: number (required)
-//   createdAt: Date (required)
-//   updatedAt: Date (required)
-// TODO: define Zod schemas for Project create and update
-// PARENT-FK: organizationId is required in the request body for direct POST /projects,
-//            but injected from URL params in nested routes — exclude it from projectCreateNestedSchema
-// BUSINESS RULE: name must be non-empty and trimmed
-// BUSINESS RULE: description is optional free text
-// BUSINESS RULE: archived defaults to false; can be updated to archive a project
-// FIELD DEFAULT: archived has @default(false) — MUST be .optional() in createSchema
-// FIELD DEFAULT: createdAt has @default(now()) — MUST be .optional() in createSchema
-// FIELD DEFAULT: updatedAt has @default(now()) — MUST be .optional() in createSchema
-const projectCreateSchema = z.object({});
-const projectCreateNestedSchema = z.object({});
-const projectUpdateSchema = z.object({});
-/* LLM_SECTION_END */
+const projectCreateSchema = z.object({
+  organizationId: z.number(),
+  name: z.string().min(1).max(255).trim(),
+  description: z.string().min(1).max(10000).optional(),
+  archived: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+const projectCreateNestedSchema = z.object({
+  name: z.string().min(1).max(255).trim(),
+  description: z.string().min(1).max(10000).optional(),
+  archived: z.boolean().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+const projectUpdateSchema = projectCreateSchema.partial();
 
 function formatErrors(errors: z.ZodIssue[]): string {
   const seen = new Set<string>();

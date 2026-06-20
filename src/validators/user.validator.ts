@@ -2,24 +2,15 @@ import { z } from 'zod';
 import { ValidationError } from '../lib/errors.js';
 import { UserCreateInput, UserUpdateInput } from '../types/user.types.js';
 
-/* LLM_SECTION_START */
-// Entity: User
-// Fields (name: ts_type, required/optional):
-//   email: string (required)
-//   username: string (required)
-//   password: string (required) [sensitive]
-//   displayName: string (optional)
-//   createdAt: Date (required)
-//   updatedAt: Date (required)
-// TODO: define Zod schemas for User create and update
-// BUSINESS RULE: Users can only modify their own profile
-// BUSINESS RULE: Email and username must be unique; username must be alphanumeric with underscores only
-// BUSINESS RULE: Password must be at least 8 characters; never returned in any API response
-// FIELD DEFAULT: createdAt has @default(now()) — MUST be .optional() in createSchema
-// FIELD DEFAULT: updatedAt has @default(now()) — MUST be .optional() in createSchema
-const userCreateSchema = z.object({});
-const userUpdateSchema = z.object({});
-/* LLM_SECTION_END */
+const userCreateSchema = z.object({
+  email: z.string().email({ message: 'Please provide a valid email address' }),
+  username: z.string().min(1).max(255).trim().regex(/^[a-zA-Z0-9_]+$/, { message: 'Username must be alphanumeric with underscores only' }),
+  password: z.string().min(8).max(128),
+  displayName: z.string().min(1).max(255).trim().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+});
+const userUpdateSchema = userCreateSchema.partial();
 
 function formatErrors(errors: z.ZodIssue[]): string {
   const seen = new Set<string>();

@@ -30,34 +30,20 @@ def run(ctx: TestContext) -> None:
                       auth_fail=True)
 
 
-# LLM_SECTION_START
-# Generate required-field validation tests for entity "Membership".
-# Canonical create path: /api/organizations/:id/memberships
-# Requires authentication: True
-#
-# Required scalar fields (excluding server-injected FK fields):
-#
-# If the required fields list above is EMPTY, output only this single comment line and nothing else:
-#   # (no required fields to validate)
-#
-# Otherwise, for EACH required field, generate one test:
-#   - Omit only that field from the body
-#   - Include all other required fields with sensible values
-#   - MUST also include every secondary FK listed below in the body (they are required by the API)
-#   - Expect HTTP 400: ctx.assert_status(resp, 400, "POST membership missing <field> → 400")
-#   - Wrap in `if token1:` guard
-#
-# Then generate ONE ownership spoofing test for the owner FK (if present):
-#   - Include "userId": <user2_id> in the body while using token1
-#   - If response is 201 and data.get("userId") == user1_id: ctx.ok("spoofing prevented")
-#   - If response is 201 and data.get("userId") == user2_id: ctx.warn("SECURITY: ownership spoofing succeeded")
-#   - Store the created entity id in ctx.state["spoofed_membership_id"] for cleanup
-#
-# Available variables (already declared above):
-#   token1, token2
-#   user1_id, user2_id
-#   membership1_id, membership2_id, membership3_id
-# LLM_SECTION_END    # 11-update  PUT happy path → 200
+    # (no required fields to validate)
+
+    if token1:
+        resp = ctx.req("POST", _create_path, token=token1,
+                       body={"userId": user2_id})
+        data = ctx.safe_json(resp)
+        if resp.status_code == 201 and data.get("userId") == user1_id:
+            ctx.ok("ownership spoofing prevented — userId correctly overridden")
+        elif resp.status_code == 201 and data.get("userId") == user2_id:
+            ctx.warn("SECURITY: ownership spoofing succeeded — userId accepted from body")
+        if resp.status_code == 201:
+            ctx.state["spoofed_membership_id"] = data.get("id")
+
+    # 11-update  PUT happy path → 200
     if membership1_id and token1:
         _update_val: str | int = "admin"
         resp = ctx.req("PUT", "/api/memberships/" + str(membership1_id),
